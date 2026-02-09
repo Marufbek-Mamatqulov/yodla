@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WIUT HUB - Vocabulary Database</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <span class="logo-text">WORD BOX</span>
+            </div>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">GENERAL</div>
+                <a href="#" class="nav-item active" data-filter="all">
+                    <i class="fas fa-database"></i>
+                    <span>All Database</span>
+                    <span class="nav-badge" id="totalBadge">0</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">LEVELS</div>
+                <a href="#" class="nav-item" data-filter="A1">
+                    <span class="level-dot" style="background: #4CAF50"></span>
+                    <span>A1 Level</span>
+                    <span class="nav-badge" id="a1Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="A2">
+                    <span class="level-dot" style="background: #8BC34A"></span>
+                    <span>A2 Level</span>
+                    <span class="nav-badge" id="a2Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="B1">
+                    <span class="level-dot" style="background: #FFC107"></span>
+                    <span>B1 Level</span>
+                    <span class="nav-badge" id="b1Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="B2">
+                    <span class="level-dot" style="background: #FF9800"></span>
+                    <span>B2 Level</span>
+                    <span class="nav-badge" id="b2Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="C1">
+                    <span class="level-dot" style="background: #f44336"></span>
+                    <span>C1 Level</span>
+                    <span class="nav-badge" id="c1Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="C2">
+                    <span class="level-dot" style="background: #9C27B0"></span>
+                    <span>C2 Level</span>
+                    <span class="nav-badge" id="c2Badge">0</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">SPECIAL</div>
+                <a href="#" class="nav-item" data-filter="verbs">
+                    <i class="fas fa-running"></i>
+                    <span>Fellar (650)</span>
+                    <span class="nav-badge" id="verbsBadge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="phrasal">
+                    <i class="fas fa-bolt"></i>
+                    <span>Phrasal Verbs</span>
+                    <span class="nav-badge" id="phrasalBadge">0</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">DESTINATION</div>
+                <a href="#" class="nav-item" data-filter="dest_b1">
+                    <i class="fas fa-book"></i>
+                    <span>Destination B1</span>
+                    <span class="nav-badge" id="destB1Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="dest_b2">
+                    <i class="fas fa-book"></i>
+                    <span>Destination B2</span>
+                    <span class="nav-badge" id="destB2Badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="dest_c1c2">
+                    <i class="fas fa-book"></i>
+                    <span>Destination C1&C2</span>
+                    <span class="nav-badge" id="destCBadge">0</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="footer-creators">
+                <div class="footer-label">Yaratuvchilar</div>
+                <div class="footer-name"><i class="fas fa-user"></i> Ma'ruf Mamatqulov</div>
+                <div class="footer-name"><i class="fas fa-user"></i> Xumoyun Xurramov</div>
+            </div>
+            <div class="footer-text">
+                <i class="fas fa-code"></i>
+                <span>WIUT Vocabulary Hub v2.0</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search vocabulary...">
+                <kbd class="search-shortcut">Ctrl+K</kbd>
+            </div>
+            <div class="topbar-right">
+                <div class="current-filter" id="currentFilter">All Database</div>
+                <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-card" data-level="A1" style="--accent: #4CAF50">
+                <div class="stat-label">A1</div>
+                <div class="stat-value" id="statA1">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="A2" style="--accent: #8BC34A">
+                <div class="stat-label">A2</div>
+                <div class="stat-value" id="statA2">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="B1" style="--accent: #FFC107">
+                <div class="stat-label">B1</div>
+                <div class="stat-value" id="statB1">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="B2" style="--accent: #FF9800">
+                <div class="stat-label">B2</div>
+                <div class="stat-value" id="statB2">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="C1" style="--accent: #f44336">
+                <div class="stat-label">C1</div>
+                <div class="stat-value" id="statC1">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="C2" style="--accent: #9C27B0">
+                <div class="stat-label">C2</div>
+                <div class="stat-value" id="statC2">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="phrasal" style="--accent: #2196F3">
+                <div class="stat-label">PHRASAL VERBS</div>
+                <div class="stat-value" id="statPhrasal">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="verbs" style="--accent: #00BCD4">
+                <div class="stat-label">FELLAR</div>
+                <div class="stat-value" id="statVerbs">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="dest_b1" style="--accent: #E91E63">
+                <div class="stat-label">DEST B1</div>
+                <div class="stat-value" id="statDestB1">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="dest_b2" style="--accent: #FF5722">
+                <div class="stat-label">DEST B2</div>
+                <div class="stat-value" id="statDestB2">0</div>
+                <div class="stat-bar"></div>
+            </div>
+            <div class="stat-card" data-level="dest_c1c2" style="--accent: #795548">
+                <div class="stat-label">DEST C1&C2</div>
+                <div class="stat-value" id="statDestC">0</div>
+                <div class="stat-bar"></div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-info">
+                    <span id="resultCount">0</span> words found
+                </div>
+                <div class="table-actions">
+                    <div class="sort-dropdown">
+                        <button class="sort-btn" id="sortBtn">
+                            <i class="fas fa-sort"></i>
+                            <span>Sort</span>
+                        </button>
+                        <div class="sort-menu" id="sortMenu">
+                            <a href="#" data-sort="az">A → Z</a>
+                            <a href="#" data-sort="za">Z → A</a>
+                            <a href="#" data-sort="level-asc">Level ↑</a>
+                            <a href="#" data-sort="level-desc">Level ↓</a>
+                        </div>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="table" title="Table view">
+                            <i class="fas fa-table"></i>
+                        </button>
+                        <button class="view-btn" data-view="grid" title="Card view">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div class="table-wrapper" id="tableView">
+                <table class="vocab-table">
+                    <thead>
+                        <tr>
+                            <th class="th-num">#</th>
+                            <th class="th-word">English</th>
+                            <th class="th-uzbek">O'zbekcha</th>
+                            <th class="th-level">Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grid View -->
+            <div class="grid-wrapper hidden" id="gridView">
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading vocabulary database...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Word Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="wordModal">
+            <button class="modal-close" id="modalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-content" id="modalContent">
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop" title="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="app.js"></script>
+</body>
+</html>

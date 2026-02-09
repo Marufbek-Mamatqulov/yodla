@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+*.xlsx
+node_modules/
+.DS_Store
+Thumbs.db
