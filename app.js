@@ -1,5 +1,5 @@
 /* ============================================================
-   WIUT HUB – Vocabulary Database  |  app.js
+   WORD BOX – 22,000+ So'zlar Bazasi  |  app.js  |  v3.0
    ============================================================ */
 
 ;(function () {
@@ -28,10 +28,11 @@
   const modalClose    = $('#modalClose');
   const backToTop     = $('#backToTop');
   const statsContainer = $('#statsContainer');
+  const heroSection   = $('#heroSection');
 
   /* ---------- State ---------- */
-  let allWords      = [];          // flat list after merging
-  let filtered      = [];          // after filter + search
+  let allWords      = [];
+  let filtered      = [];
   let currentPage   = 1;
   const PAGE_SIZE   = 50;
   let activeFilter  = 'all';
@@ -40,6 +41,28 @@
   let searchTerm    = '';
 
   const levelOrder = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+
+  /* ---------- Filter map ---------- */
+  const filterMap = {
+    'all':         null,
+    'A1':          w => w.level === 'A1' && w.category === 'level',
+    'A2':          w => w.level === 'A2' && w.category === 'level',
+    'B1':          w => w.level === 'B1' && w.category === 'level',
+    'B2':          w => w.level === 'B2' && w.category === 'level',
+    'C1':          w => w.level === 'C1' && w.category === 'level',
+    'C2':          w => w.level === 'C2' && w.category === 'level',
+    'verbs':       w => w.category === 'verbs',
+    'phrasal':     w => w.category === 'phrasal',
+    'dest_b1':     w => w.category === 'dest_b1',
+    'dest_b2':     w => w.category === 'dest_b2',
+    'dest_c1c2':   w => w.category === 'dest_c1c2',
+    'essential':   w => w.category === 'essential',
+    'essential_1': w => w.level === 'Essential 1',
+    'essential_2': w => w.level === 'Essential 2',
+    'essential_3': w => w.level === 'Essential 3',
+    'essential_4': w => w.level === 'Essential 4',
+    'essential_5': w => w.level === 'Essential 5',
+  };
 
   /* ---------- Theme ---------- */
   function applyTheme(t) {
@@ -73,10 +96,16 @@
       $$('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
       activeFilter = item.dataset.filter;
-      currentFilter.textContent = item.querySelector('span:not(.nav-badge):not(.level-dot)').textContent;
+      const label = item.querySelector('span:not(.nav-badge):not(.level-dot)');
+      currentFilter.textContent = label ? label.textContent : 'Barcha so\'zlar';
       currentPage = 1;
       applyFilters();
       sidebar.classList.remove('open');
+
+      // Show/hide hero
+      if (heroSection) {
+        heroSection.style.display = activeFilter === 'all' ? '' : 'none';
+      }
     });
   });
 
@@ -88,7 +117,7 @@
       searchTerm = searchInput.value.trim().toLowerCase();
       currentPage = 1;
       applyFilters();
-    }, 200);
+    }, 180);
   });
 
   // Ctrl+K shortcut
@@ -151,9 +180,10 @@
           n.classList.toggle('active', n.dataset.filter === lvl);
         });
         activeFilter = lvl;
-        currentFilter.textContent = lvl.toUpperCase();
+        currentFilter.textContent = card.querySelector('.stat-label')?.textContent || lvl.toUpperCase();
         currentPage = 1;
         applyFilters();
+        if (heroSection) heroSection.style.display = 'none';
       }
     });
   });
@@ -165,7 +195,6 @@
       const resp = await fetch('data.json');
       const data = await resp.json();
 
-      // Data is already a flat array
       allWords = (data.words || []).map(w => ({
         english: w.english || '',
         uzbek: w.uzbek || '',
@@ -177,11 +206,17 @@
 
       updateStats();
       applyFilters();
+
+      // Update hero total
+      const heroTotal = $('#heroTotal');
+      if (heroTotal) heroTotal.textContent = allWords.length.toLocaleString();
+
     } catch (err) {
       console.error('Failed to load data:', err);
-      tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-secondary)">
-        <i class="fas fa-exclamation-circle" style="font-size:24px;margin-bottom:8px;display:block"></i>
-        Failed to load data. Make sure data.json is in the same folder.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:60px;color:var(--text-secondary)">
+        <i class="fas fa-exclamation-triangle" style="font-size:32px;margin-bottom:12px;display:block;color:#ef4444"></i>
+        <strong>Ma'lumotlarni yuklashda xatolik</strong><br>
+        <span style="font-size:13px">data.json fayli mavjudligiga ishonch hosil qiling.</span></td></tr>`;
     } finally {
       loading.classList.add('hidden');
     }
@@ -196,8 +231,12 @@
       catCounts[w.category] = (catCounts[w.category] || 0) + 1;
     });
 
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || 0; };
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (val || 0).toLocaleString();
+    };
 
+    // Stat cards
     set('statA1', levelCounts['A1']);
     set('statA2', levelCounts['A2']);
     set('statB1', levelCounts['B1']);
@@ -209,6 +248,7 @@
     set('statDestB1', levelCounts['Dest B1']);
     set('statDestB2', levelCounts['Dest B2']);
     set('statDestC', levelCounts['Dest C1C2']);
+    set('statEssential', catCounts['essential']);
 
     // Nav badges
     set('totalBadge', allWords.length);
@@ -223,25 +263,22 @@
     set('destB1Badge', levelCounts['Dest B1']);
     set('destB2Badge', levelCounts['Dest B2']);
     set('destCBadge', levelCounts['Dest C1C2']);
+    set('ess1Badge', levelCounts['Essential 1']);
+    set('ess2Badge', levelCounts['Essential 2']);
+    set('ess3Badge', levelCounts['Essential 3']);
+    set('ess4Badge', levelCounts['Essential 4']);
+    set('ess5Badge', levelCounts['Essential 5']);
   }
 
   /* ---------- Filter + Sort ---------- */
-  // Map filter values to categories
-  const filterToCat = {
-    'phrasal': 'phrasal', 'verbs': 'verbs',
-    'dest_b1': 'dest_b1', 'dest_b2': 'dest_b2', 'dest_c1c2': 'dest_c1c2'
-  };
-
   function applyFilters() {
+    const filterFn = filterMap[activeFilter];
+
     filtered = allWords.filter(w => {
-      if (activeFilter !== 'all') {
-        if (filterToCat[activeFilter]) {
-          if (w.category !== filterToCat[activeFilter]) return false;
-        } else {
-          // A1–C2 level filter
-          if (w.level !== activeFilter || w.category !== 'level') return false;
-        }
-      }
+      // Category/level filter
+      if (filterFn && !filterFn(w)) return false;
+
+      // Search
       if (searchTerm) {
         return (
           w.english.toLowerCase().includes(searchTerm) ||
@@ -280,12 +317,12 @@
         <div class="empty-state">
           <i class="fas fa-search"></i>
           <h3>So'z topilmadi</h3>
-          <p>Qidiruv yoki filterni o'zgartiring.</p>
+          <p>Qidiruv so'zini yoki filterni o'zgartirib ko'ring.</p>
         </div></td></tr>`;
       gridView.innerHTML = `<div class="empty-state">
         <i class="fas fa-search"></i>
         <h3>So'z topilmadi</h3>
-        <p>Qidiruv yoki filterni o'zgartiring.</p>
+        <p>Qidiruv so'zini yoki filterni o'zgartirib ko'ring.</p>
       </div>`;
       return;
     }
@@ -295,10 +332,10 @@
       const num = start + i + 1;
       const lvlClass = getLevelClass(w);
       return `<tr data-idx="${start + i}">
-        <td style="color:var(--text-secondary);font-size:12px">${num}</td>
+        <td style="color:var(--text-secondary);font-size:12px;font-weight:500">${num}</td>
         <td class="word-cell">${esc(w.english)}</td>
-        <td class="uzbek-cell">${esc(w.uzbek) || '—'}</td>
-        <td><span class="level-badge level-${lvlClass}">${esc(w.level)}</span></td>
+        <td class="uzbek-cell">${esc(w.uzbek) || '<span style="color:#cbd5e1">—</span>'}</td>
+        <td><span class="level-badge level-${lvlClass}">${esc(formatLevel(w.level))}</span></td>
       </tr>`;
     }).join('');
 
@@ -308,9 +345,9 @@
       return `<div class="grid-card" data-level="${lvlClass}" data-idx="${start + i}">
         <div class="grid-card-top">
           <div class="grid-card-word">${esc(w.english)}</div>
-          <span class="level-badge level-${lvlClass}">${esc(w.level)}</span>
+          <span class="level-badge level-${lvlClass}">${esc(formatLevel(w.level))}</span>
         </div>
-        <div class="grid-card-guide">${esc(w.uzbek)}</div>
+        <div class="grid-card-guide">${esc(w.uzbek) || '—'}</div>
         ${w.definition ? `<div class="grid-card-def">${esc(w.definition)}</div>` : ''}
         ${w.topic ? `<div class="grid-card-meta"><span class="topic-tag">${esc(w.topic)}</span></div>` : ''}
       </div>`;
@@ -326,7 +363,22 @@
 
     // Scroll to top of table section
     const ts = $('.table-section');
-    if (ts) ts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (ts && currentPage > 1) ts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- Format level display ---------- */
+  function formatLevel(level) {
+    const map = {
+      'Essential 1': 'Ess. 1',
+      'Essential 2': 'Ess. 2',
+      'Essential 3': 'Ess. 3',
+      'Essential 4': 'Ess. 4',
+      'Essential 5': 'Ess. 5',
+      'Dest B1': 'Dest B1',
+      'Dest B2': 'Dest B2',
+      'Dest C1C2': 'Dest C1&C2',
+    };
+    return map[level] || level;
   }
 
   /* ---------- Pagination ---------- */
@@ -336,7 +388,6 @@
 
     let html = '';
 
-    // Prev
     html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-page="prev">
       <i class="fas fa-chevron-left"></i></button>`;
 
@@ -349,7 +400,6 @@
       }
     });
 
-    // Next
     html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-page="next">
       <i class="fas fa-chevron-right"></i></button>`;
 
@@ -391,6 +441,7 @@
     if (lvl === 'Dest B1') return 'DestB1';
     if (lvl === 'Dest B2') return 'DestB2';
     if (lvl === 'Dest C1C2') return 'DestC';
+    if (lvl.startsWith('Essential')) return lvl.replace(' ', '');
     return lvl;
   }
 
@@ -401,7 +452,8 @@
     modalContent.innerHTML = `
       <div class="modal-word">${esc(w.english)}</div>
       <div class="modal-badges">
-        <span class="level-badge level-${lvlClass}">${esc(w.level)}</span>
+        <span class="level-badge level-${lvlClass}">${esc(formatLevel(w.level))}</span>
+        ${w.category ? `<span class="topic-tag">${esc(getCategoryLabel(w.category))}</span>` : ''}
         ${w.topic ? `<span class="topic-tag">${esc(w.topic)}</span>` : ''}
       </div>
       <div class="modal-divider"></div>
@@ -412,12 +464,25 @@
       }
       ${w.definition ? `
         <div class="modal-divider"></div>
-        <div class="modal-section-title">Definition</div>
+        <div class="modal-section-title">Definition (inglizcha)</div>
         <div class="modal-definition">${esc(w.definition)}</div>
       ` : ''}
     `;
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  function getCategoryLabel(cat) {
+    const map = {
+      'level': 'CEFR',
+      'verbs': "Fe'llar",
+      'phrasal': 'Phrasal Verbs',
+      'dest_b1': 'Destination B1',
+      'dest_b2': 'Destination B2',
+      'dest_c1c2': 'Destination C1&C2',
+      'essential': '4000 Essential'
+    };
+    return map[cat] || cat;
   }
 
   function closeModal() {

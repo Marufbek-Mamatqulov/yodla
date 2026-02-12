@@ -3,7 +3,7 @@ import json
 import re
 from collections import Counter
 
-wb = openpyxl.load_workbook("SO'Z BOYLIGI (A1, A2, B1, B2, C1, C2).xlsx")
+wb = openpyxl.load_workbook("SO'Z BOYLIGI (A1, A2, B1, B2, C1, C2) (3).xlsx", read_only=True)
 
 all_words = []
 
@@ -23,6 +23,10 @@ def split_word_translation(text):
     if '\u2013' in text:
         parts = text.split('\u2013', 1)
         return parts[0].strip(), parts[1].strip() if len(parts) > 1 else ''
+    # Try " – " (space-endash-space)
+    if ' – ' in text:
+        parts = text.split(' – ', 1)
+        return parts[0].strip(), parts[1].strip() if len(parts) > 1 else ''
     # Try " - " (space-hyphen-space)
     if ' - ' in text:
         parts = text.split(' - ', 1)
@@ -39,7 +43,11 @@ def is_header_row(text):
         return True
     headers = ['VOCABULARY FROM', 'TOPIC VOCABULARY', 'WORD PATTERNS',
                'WORD FORMATION', 'PREPOSITIONAL PHRASES', 'PHRASES AND',
-               'USE OF ENGLISH', 'CONFUSING', 'PHRASAL VERB']
+               'USE OF ENGLISH', 'CONFUSING', 'PHRASAL VERB',
+               'INGLIZCHA', "O'ZBEKCHA", 'DESTINATION', '650 TA',
+               "A1 DARAJADAGI", "A2 DARAJADAGI", "B1 DARAJADAGI",
+               "B2 DARAJADAGI", "C1 DARAJADAGI", "C2 DARAJADAGI",
+               "DARAJADAGI SO'ZLAR"]
     for h in headers:
         if t.startswith(h):
             return True
@@ -56,12 +64,12 @@ for level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']:
     if level not in wb.sheetnames:
         continue
     ws = wb[level]
-    data_col = 1  # Column B (0-indexed)
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        cell = row[data_col] if len(row) > data_col and row[data_col] else None
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        cell = row[1] if len(row) > 1 and row[1] else None
         if not cell:
             continue
-        eng, uzb = split_word_translation(cell)
+        eng, uzb = split_word_translation(str(cell))
         if eng and not is_header_row(eng):
             all_words.append({
                 'english': eng,
@@ -79,11 +87,12 @@ print(f"A1-C2 words: {len(all_words)}")
 verbs_start = len(all_words)
 if 'Fellar 650 ta' in wb.sheetnames:
     ws = wb['Fellar 650 ta']
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        cell = row[0] if row[0] else None
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        cell = row[0] if len(row) > 0 and row[0] else None
         if not cell:
             continue
-        eng, uzb = split_word_translation(cell)
+        eng, uzb = split_word_translation(str(cell))
         if eng and not is_header_row(eng):
             all_words.append({
                 'english': eng,
@@ -95,14 +104,14 @@ print(f"Verbs: {len(all_words) - verbs_start}")
 
 # ============================================================
 # 3. Destination B1
-#    Col A = "word – translation"
 # ============================================================
 dest_b1_start = len(all_words)
 current_topic = ''
 if 'Destination B1 ozbekcha tarjima' in wb.sheetnames:
     ws = wb['Destination B1 ozbekcha tarjima']
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        cell = str(row[0]).strip() if row[0] else ''
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        cell = str(row[0]).strip() if len(row) > 0 and row[0] else ''
         if not cell:
             continue
         if is_header_row(cell):
@@ -121,18 +130,18 @@ print(f"Destination B1: {len(all_words) - dest_b1_start}")
 
 # ============================================================
 # 4. Destination B2
-#    Col A = "word - translation"
 # ============================================================
 dest_b2_start = len(all_words)
 current_topic = ''
 if 'Destination B2 ozbekcha tarjima' in wb.sheetnames:
     ws = wb['Destination B2 ozbekcha tarjima']
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        cell = str(row[0]).strip() if row[0] else ''
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        cell = str(row[0]).strip() if len(row) > 0 and row[0] else ''
         if not cell:
             continue
         upper = cell.upper()
-        if '#' in upper:
+        if '#' in upper or is_header_row(cell):
             current_topic = cell
             continue
         eng, uzb = split_word_translation(cell)
@@ -153,8 +162,9 @@ print(f"Destination B2: {len(all_words) - dest_b2_start}")
 dest_c_start = len(all_words)
 if 'Destination C1&C2 ozbekcha tarj' in wb.sheetnames:
     ws = wb['Destination C1&C2 ozbekcha tarj']
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        eng = str(row[0]).strip() if row[0] else ''
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        eng = str(row[0]).strip() if len(row) > 0 and row[0] else ''
         uzb = str(row[1]).strip() if len(row) > 1 and row[1] else ''
         if not eng or is_header_row(eng):
             continue
@@ -173,8 +183,9 @@ print(f"Destination C1&C2: {len(all_words) - dest_c_start}")
 pv_start = len(all_words)
 if 'Phrasal verbs Destination B2,C1' in wb.sheetnames:
     ws = wb['Phrasal verbs Destination B2,C1']
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
-        eng = str(row[0]).strip() if row[0] else ''
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row = list(row) if row else []
+        eng = str(row[0]).strip() if len(row) > 0 and row[0] else ''
         uzb = str(row[1]).strip() if len(row) > 1 and row[1] else ''
         defn = str(row[2]).strip() if len(row) > 2 and row[2] else ''
         if not eng or is_header_row(eng):
@@ -189,6 +200,38 @@ if 'Phrasal verbs Destination B2,C1' in wb.sheetnames:
             'definition': defn
         })
 print(f"Phrasal Verbs: {len(all_words) - pv_start}")
+
+# ============================================================
+# 7. 4000 Essential English Words (Books 1-5)
+#    Col A = English, Col B = Uzbek
+# ============================================================
+essential_books = [
+    ('4000 Essential book 1', 'Essential 1'),
+    ('4000 Essential book 2', 'Essential 2'),
+    ('4000 Essential book 3', 'Essential 3'),
+    ('4000 Essential book 4', 'Essential 4'),
+    ('4000 Essential book 5', 'Essential 5'),
+]
+
+for sheet_name, book_label in essential_books:
+    book_start = len(all_words)
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            row = list(row) if row else []
+            eng = str(row[0]).strip() if len(row) > 0 and row[0] else ''
+            uzb = str(row[1]).strip() if len(row) > 1 and row[1] else ''
+            if not eng or is_header_row(eng):
+                continue
+            all_words.append({
+                'english': eng,
+                'uzbek': uzb,
+                'level': book_label,
+                'category': 'essential'
+            })
+    print(f"{sheet_name}: {len(all_words) - book_start}")
+
+wb.close()
 
 # ============================================================
 # Build stats & export
