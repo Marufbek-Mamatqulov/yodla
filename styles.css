@@ -65,6 +65,8 @@
 
 html {
     scroll-behavior: smooth;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 body {
@@ -74,6 +76,8 @@ body {
     display: flex;
     min-height: 100vh;
     overflow-x: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -307,6 +311,10 @@ body {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* ========== Top Bar ========== */
@@ -317,6 +325,8 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    width: 100%;
+    min-width: 0;
     padding: 14px 32px;
     background: rgba(255,255,255,0.85);
     border-bottom: 1px solid var(--border-color);
@@ -341,7 +351,7 @@ body {
 
 .search-container {
     flex: 1;
-    max-width: 560px;
+    max-width: 100%;
     position: relative;
 }
 
@@ -435,10 +445,18 @@ body {
 
 /* ========== Hero Section ========== */
 .hero-section {
-    background: var(--gradient-hero);
-    padding: 48px 32px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 8px 32px rgba(99,102,241,0.13);
+    padding: 32px 18px 18px 18px;
+    margin-bottom: 18px;
+    color: #fff;
     position: relative;
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .hero-section::before {
@@ -451,12 +469,13 @@ body {
 .hero-section::after {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 500px;
-    height: 500px;
+    top: -20%;
+    right: -6vw;
+    width: min(40vw, 420px);
+    height: min(40vw, 420px);
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     border-radius: 50%;
+    pointer-events: none;
 }
 
 .hero-content {
@@ -762,10 +781,26 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #6366f1;
+    border-radius: 8px;
+}
+.table-wrapper::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
 .vocab-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    min-width: 0;
 }
 
 .vocab-table thead {
@@ -776,7 +811,7 @@ body {
 
 .vocab-table th {
     background: var(--bg-primary);
-    padding: 14px 18px;
+    padding: 12px 10px;
     text-align: left;
     font-size: 11px;
     font-weight: 700;
@@ -786,69 +821,42 @@ body {
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
     user-select: none;
+    border-right: 1px solid var(--border-color);
 }
 
+.vocab-table th:last-child { border-right: none; }
+
 .vocab-table td {
-    padding: 13px 18px;
+    padding: 12px 10px;
     border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
     vertical-align: middle;
     color: var(--text-primary);
+    font-size: 14px;
+    word-break: break-word;
+    max-width: 220px;
+    white-space: pre-line;
+    line-height: 1.4;
 }
+
+.vocab-table td:last-child { border-right: none; }
 
 .vocab-table tbody tr {
     transition: all var(--transition);
     cursor: pointer;
 }
 
-.vocab-table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.04);
-}
-
-[data-theme="dark"] .vocab-table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.08);
-}
-
-.vocab-table tbody tr:last-child td {
-    border-bottom: none;
-}
+.vocab-table tbody tr:hover { background: rgba(99,102,241,0.04); }
 
 .th-num { width: 55px; }
-.th-word { min-width: 200px; width: 35%; }
-.th-uzbek { min-width: 200px; width: 43%; }
+.th-word { min-width: 140px; width: 30%; }
+.th-uzbek { min-width: 140px; width: 50%; }
 .th-level { width: 110px; }
 
-.word-cell {
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.2px;
-}
-
-.uzbek-cell {
-    color: var(--text-secondary);
-    font-size: 13px;
-}
-
-.topic-tag {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 500;
-    background: rgba(107, 114, 128, 0.08);
-    color: var(--text-secondary);
-}
-
-.level-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    min-width: 42px;
-}
+.word-cell { font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+.uzbek-cell { color: var(--text-secondary); font-size: 13px; }
+.topic-tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; background: rgba(107,114,128,0.08); color: var(--text-secondary); }
+.level-badge { display:inline-flex; align-items:center; justify-content:center; padding:4px 12px; border-radius:8px; font-size:11px; font-weight:700; letter-spacing:0.3px; min-width:42px; }
 
 /* Level badge colors */
 .level-A1 { background: rgba(16, 185, 129, 0.12); color: #059669; }
@@ -1065,14 +1073,23 @@ body {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 200;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Android WebView uchun fallback */
+@supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+    .modal-overlay {
+        background: rgba(0, 0, 0, 0.55);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
 }
 
 .modal-overlay.open {
@@ -1262,16 +1279,74 @@ body {
 @media (max-width: 768px) {
     .topbar {
         padding: 10px 16px;
+        min-height: 56px;
     }
 
     .search-shortcut { display: none; }
 
-    .search-input { padding-right: 14px; }
+    .hero-section::after {
+        display: none;
+    }
 
-    .hero-section { padding: 32px 16px; }
-    .hero-title { font-size: 24px; }
-    .hero-desc { font-size: 13px; }
-    .hero-stat-value { font-size: 22px; }
+    .hero-section::before {
+        left: -15px;
+    }
+
+    .search-input { 
+        padding-right: 14px;
+        height: 44px;
+        font-size: 14px;
+    }
+
+    .search-wrapper {
+        max-width: 100%;
+    }
+
+    .logo-text {
+        font-size: 16px;
+    }
+
+    .hamburger {
+        width: 40px;
+        height: 40px;
+    }
+
+    .hero-section {
+        padding: 10px 8px 8px 8px;
+        min-height: unset;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 2px 16px rgba(99,102,241,0.08);
+        margin-bottom: 10px;
+    }
+    .hero-title {
+        font-size: 16.5px;
+        line-height: 1.2;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+    .hero-desc {
+        font-size: 12px;
+        margin-top: 2px;
+        color: var(--text-secondary);
+    }
+    .hero-stats {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px 4px;
+        margin-top: 8px;
+    }
+    .hero-stat {
+        padding: 0 6px;
+        min-width: 80px;
+        font-size: 12px;
+    }
+    .hero-stat-value {
+        font-size: 15px;
+    }
+    .hero-stat-label {
+        font-size: 8px;
+    }
+    .hero-stat-divider { display: none; }
 
     .stats-container {
         padding: 16px 16px 4px;
@@ -1302,8 +1377,22 @@ body {
 }
 
 @media (max-width: 480px) {
+    .topbar {
+        padding: 8px 12px;
+    }
+
+    .logo-text {
+        font-size: 14px;
+    }
+
+    .logo-sub {
+        display: none;
+    }
+
     .stats-container {
+        padding: 12px 12px 4px;
         grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
     }
 
     .stat-label { font-size: 9px; }
@@ -1324,7 +1413,40 @@ body {
     .table-wrapper { border: 1px solid #ccc; }
 }
 
-/* ========== Animations ========== */
+/* ========== Touch-friendly fixes for mobile ========== */
+.vocab-table td,
+.nav-item,
+.stat-card,
+.modal-close {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Prevent text selection on mobile */
+.vocab-table td:active,
+.nav-item:active {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Smooth scrolling for mobile */
+html {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/* Android WebView specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .modal-overlay {
+        /* Android WebView needs explicit height */
+        height: 100%;
+        min-height: -webkit-fill-available;
+    }
+
+    body {
+        min-height: -webkit-fill-available;
+    }
+}
 @keyframes slideInUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

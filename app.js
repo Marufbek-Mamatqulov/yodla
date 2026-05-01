@@ -470,6 +470,9 @@
     `;
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    
+    // Android WebView uchun qo'shimcha
+    modalOverlay.style.display = 'flex';
   }
 
   function getCategoryLabel(cat) {
@@ -488,12 +491,34 @@
   function closeModal() {
     modalOverlay.classList.remove('open');
     document.body.style.overflow = '';
+    // Android WebView uchun qo'shimcha
+    setTimeout(() => {
+      if (!modalOverlay.classList.contains('open')) {
+        modalOverlay.style.display = 'none';
+      }
+    }, 300);
   }
 
   modalClose.addEventListener('click', closeModal);
+  
+  // Touch support for modal overlay
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
   });
+  
+  // Touch support for closing on swipe down
+  let touchStartY = 0;
+  modalOverlay.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  modalOverlay.addEventListener('touchend', (e) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    // If swiped down more than 100px, close modal
+    if (touchEndY - touchStartY > 100) {
+      closeModal();
+    }
+  }, { passive: true });
 
   /* ---------- Helpers ---------- */
   function esc(str) {
