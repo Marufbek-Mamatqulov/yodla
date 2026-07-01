@@ -115,6 +115,26 @@
             </div>
 
             <div class="nav-section">
+                <div class="nav-section-title">O'YINLAR</div>
+                <a href="#" class="nav-item" data-game="flashcards">
+                    <i class="fas fa-clone"></i>
+                    <span>Flashcards</span>
+                </a>
+                <a href="#" class="nav-item" data-game="quiz">
+                    <i class="fas fa-circle-question"></i>
+                    <span>Test (Quiz)</span>
+                </a>
+                <a href="#" class="nav-item" data-game="match">
+                    <i class="fas fa-shuffle"></i>
+                    <span>Juftlik topish</span>
+                </a>
+                <a href="#" class="nav-item" data-game="typing">
+                    <i class="fas fa-keyboard"></i>
+                    <span>Tez yozish</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
                 <div class="nav-section-title">4000 ESSENTIAL WORDS</div>
                 <a href="#" class="nav-item" data-filter="essential_1">
                     <i class="fas fa-star"></i>
@@ -149,6 +169,7 @@
                 <div class="footer-label">Yaratuvchilar</div>
                 <div class="footer-name"><i class="fas fa-code"></i> Ma'ruf Mamatqulov</div>
                 <div class="footer-name"><i class="fas fa-database"></i> Xumoyun Xurramov</div>
+                <div class="footer-name"><i class="fas fa-folder-open"></i> Zulfiqorova Sevara</div>
             </div>
             <div class="footer-text">
                 <i class="fas fa-heart"></i>
@@ -383,6 +404,16 @@
     <button class="back-to-top" id="backToTop" title="Yuqoriga qaytish">
         <i class="fas fa-arrow-up"></i>
     </button>
+
+    <!-- Game Modal -->
+    <div class="game-overlay" id="gameOverlay">
+        <div class="game-modal" id="gameModalBox">
+            <button class="game-close" id="gameClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="game-body" id="gameBody"></div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

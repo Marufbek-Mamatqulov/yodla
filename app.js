@@ -93,6 +93,11 @@
   $$('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
+      if (item.dataset.game) {
+        sidebar.classList.remove('open');
+        openGameSetup(item.dataset.game);
+        return;
+      }
       $$('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
       activeFilter = item.dataset.filter;
@@ -127,7 +132,8 @@
       searchInput.focus();
     }
     if (e.key === 'Escape') {
-      if (modalOverlay.classList.contains('open')) closeModal();
+      if (gameOverlay.classList.contains('open')) closeGame();
+      else if (modalOverlay.classList.contains('open')) closeModal();
       else if (document.activeElement === searchInput) searchInput.blur();
     }
   });
@@ -501,6 +507,445 @@
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  /* ================================================================
+     GAMES
+     ================================================================ */
+  const gameOverlay = $('#gameOverlay');
+  const gameBody    = $('#gameBody');
+  const gameClose   = $('#gameClose');
+
+  let gameState = {};
+
+  function closeGame() {
+    gameOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (gameState.timer) clearInterval(gameState.timer);
+    gameState = {};
+  }
+  gameClose.addEventListener('click', closeGame);
+  gameOverlay.addEventListener('click', (e) => { if (e.target === gameOverlay) closeGame(); });
+
+  const gameMeta = {
+    flashcards: { title: 'Flashcards', icon: 'fa-clone', desc: "Kartochkani bosib ag'daring va tarjimasini ko'ring." },
+    quiz:       { title: 'Test (Quiz)', icon: 'fa-circle-question', desc: "To'g'ri tarjimani tanlang va ballarni to'plang." },
+    match:      { title: "Juftlik topish", icon: 'fa-shuffle', desc: "Inglizcha so'zni o'zbekcha tarjimasi bilan moslashtiring." },
+    typing:     { title: 'Tez yozish', icon: 'fa-keyboard', desc: "Tarjimani ko'rib, inglizcha so'zni tez va to'g'ri yozing." },
+  };
+
+  const roundOptions = {
+    flashcards: [10, 20, 30],
+    quiz:       [10, 15, 20],
+    match:      [6, 8, 10],
+    typing:     [30, 60, 90],
+  };
+
+  const levelChoices = [
+    { v: 'all', l: "Barcha so'zlar" },
+    { v: 'A1', l: 'A1 — Boshlang\'ich' },
+    { v: 'A2', l: 'A2 — Elementar' },
+    { v: 'B1', l: 'B1 — O\'rta' },
+    { v: 'B2', l: 'B2 — Yuqori o\'rta' },
+    { v: 'C1', l: 'C1 — Ilg\'or' },
+    { v: 'C2', l: 'C2 — Professional' },
+    { v: 'verbs', l: "Fe'llar" },
+    { v: 'phrasal', l: 'Phrasal Verbs' },
+    { v: 'dest_b1', l: 'Destination B1' },
+    { v: 'dest_b2', l: 'Destination B2' },
+    { v: 'dest_c1c2', l: 'Destination C1&C2' },
+    { v: 'essential_1', l: 'Essential — Book 1' },
+    { v: 'essential_2', l: 'Essential — Book 2' },
+    { v: 'essential_3', l: 'Essential — Book 3' },
+    { v: 'essential_4', l: 'Essential — Book 4' },
+    { v: 'essential_5', l: 'Essential — Book 5' },
+  ];
+
+  function poolFor(levelKey) {
+    const fn = filterMap[levelKey];
+    const pool = fn ? allWords.filter(fn) : allWords;
+    return pool.filter(w => w.english && w.uzbek);
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function sample(arr, n) {
+    return shuffle(arr).slice(0, n);
+  }
+
+  function openGameSetup(game) {
+    if (!allWords.length) return;
+    const meta = gameMeta[game];
+    if (!meta) return;
+    gameOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (gameState.timer) clearInterval(gameState.timer);
+    gameState = {};
+
+    const rounds = roundOptions[game];
+    const midIdx = 1;
+    let selectedRound = rounds[midIdx];
+
+    gameBody.innerHTML = `
+      <div class="game-setup">
+        <div class="game-setup-icon"><i class="fas ${meta.icon}"></i></div>
+        <h2 class="game-setup-title">${meta.title}</h2>
+        <p class="game-setup-desc">${meta.desc}</p>
+        <div class="game-field">
+          <label>Bo'lim</label>
+          <select id="gameLevelSelect">
+            ${levelChoices.map(c => `<option value="${c.v}">${esc(c.l)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="game-field">
+          <label>${game === 'typing' ? 'Vaqt (soniya)' : game === 'match' ? "Juftliklar soni" : "Savollar soni"}</label>
+          <div class="game-round-choices" id="gameRoundChoices">
+            ${rounds.map((r, i) => `<button class="round-chip ${i === midIdx ? 'active' : ''}" data-round="${r}">${r}</button>`).join('')}
+          </div>
+        </div>
+        <button class="game-start-btn" id="gameStartBtn"><i class="fas fa-play"></i> Boshlash</button>
+        <div id="gameSetupError"></div>
+      </div>
+    `;
+
+    $$('.round-chip', gameBody).forEach(chip => {
+      chip.addEventListener('click', () => {
+        $$('.round-chip', gameBody).forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedRound = +chip.dataset.round;
+      });
+    });
+
+    $('#gameStartBtn', gameBody).addEventListener('click', () => {
+      const level = $('#gameLevelSelect', gameBody).value;
+      const pool = poolFor(level);
+      const errBox = $('#gameSetupError', gameBody);
+      if (pool.length < 4) {
+        errBox.innerHTML = `<p style="color:#ef4444;text-align:center;margin-top:12px;font-size:13px">Bu bo'limda yetarli so'z yo'q. Boshqa bo'lim tanlang.</p>`;
+        return;
+      }
+      startGame(game, pool, selectedRound);
+    });
+  }
+
+  function startGame(game, pool, n) {
+    if (game === 'flashcards') startFlashcards(pool, n);
+    else if (game === 'quiz') startQuiz(pool, n);
+    else if (game === 'match') startMatch(pool, n);
+    else if (game === 'typing') startTyping(pool, n);
+  }
+
+  function renderGameSummary(opts) {
+    gameBody.innerHTML = `
+      <div class="game-summary">
+        <div class="game-summary-icon"><i class="fas fa-trophy"></i></div>
+        <h2>${esc(opts.title)}</h2>
+        <div class="game-summary-stats">
+          ${opts.stats.map(s => `<div class="summary-stat ${s.cls || ''}"><div class="summary-num">${esc(String(s.value))}</div><div>${esc(s.label)}</div></div>`).join('')}
+        </div>
+        <div class="game-summary-actions">
+          <button class="game-start-btn" id="gameRestart"><i class="fas fa-rotate-right"></i> Qayta boshlash</button>
+          <button class="game-secondary-btn" id="gameBackToSetup"><i class="fas fa-arrow-left"></i> Bo'limni o'zgartirish</button>
+        </div>
+      </div>
+    `;
+    $('#gameRestart', gameBody).addEventListener('click', opts.onRestart);
+    $('#gameBackToSetup', gameBody).addEventListener('click', opts.onBack);
+  }
+
+  /* ---------- Flashcards ---------- */
+  function startFlashcards(pool, n) {
+    const words = sample(pool, Math.min(n, pool.length));
+    let idx = 0, known = 0, unknown = 0;
+
+    function render() {
+      if (idx >= words.length) return finish();
+      const w = words[idx];
+      gameBody.innerHTML = `
+        <div class="game-header">
+          <div class="game-progress"><div class="game-progress-bar" style="width:${(idx / words.length) * 100}%"></div></div>
+          <div class="game-counter">${idx + 1} / ${words.length}</div>
+        </div>
+        <div class="flashcard-wrap">
+          <div class="flashcard" id="flashcard">
+            <div class="flashcard-face flashcard-front">
+              <span class="flashcard-hint">Inglizcha</span>
+              <div class="flashcard-word">${esc(w.english)}</div>
+              <span class="flashcard-tap">Tarjimani ko'rish uchun bosing</span>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <span class="flashcard-hint">O'zbekcha</span>
+              <div class="flashcard-word">${esc(w.uzbek)}</div>
+              ${w.definition ? `<div class="flashcard-def">${esc(w.definition)}</div>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="flashcard-actions">
+          <button class="fc-btn fc-no" id="fcNo"><i class="fas fa-xmark"></i> Bilmayman</button>
+          <button class="fc-btn fc-yes" id="fcYes"><i class="fas fa-check"></i> Bilaman</button>
+        </div>
+      `;
+      const card = $('#flashcard', gameBody);
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+      $('#fcNo', gameBody).addEventListener('click', (e) => { e.stopPropagation(); unknown++; idx++; render(); });
+      $('#fcYes', gameBody).addEventListener('click', (e) => { e.stopPropagation(); known++; idx++; render(); });
+    }
+
+    function finish() {
+      const pct = Math.round((known / words.length) * 100);
+      renderGameSummary({
+        title: 'Yakunlandi!',
+        stats: [
+          { value: known, label: 'Bilaman', cls: 'summary-good' },
+          { value: unknown, label: 'Bilmayman', cls: 'summary-bad' },
+          { value: pct + '%', label: 'Natija' },
+        ],
+        onRestart: () => startFlashcards(pool, n),
+        onBack: () => openGameSetup('flashcards'),
+      });
+    }
+
+    render();
+  }
+
+  /* ---------- Quiz ---------- */
+  function startQuiz(pool, n) {
+    const words = sample(pool, Math.min(n, pool.length));
+    let idx = 0, score = 0, answered = false;
+
+    function render() {
+      if (idx >= words.length) return finish();
+      const w = words[idx];
+      answered = false;
+      const distractors = sample(pool.filter(p => p.uzbek !== w.uzbek), Math.min(3, pool.length - 1));
+      const options = shuffle([w, ...distractors]);
+
+      gameBody.innerHTML = `
+        <div class="game-header">
+          <div class="game-progress"><div class="game-progress-bar" style="width:${(idx / words.length) * 100}%"></div></div>
+          <div class="game-counter">${idx + 1} / ${words.length} &nbsp;·&nbsp; <i class="fas fa-star" style="color:#f59e0b"></i> ${score}</div>
+        </div>
+        <div class="quiz-question">${esc(w.english)}</div>
+        <div class="quiz-options" id="quizOptions">
+          ${options.map(o => `<button class="quiz-opt" data-correct="${o.uzbek === w.uzbek}">${esc(o.uzbek)}</button>`).join('')}
+        </div>
+        <div class="quiz-next-wrap" id="quizNextWrap"></div>
+      `;
+
+      $$('.quiz-opt', gameBody).forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (answered) return;
+          answered = true;
+          if (btn.dataset.correct === 'true') score++;
+          $$('.quiz-opt', gameBody).forEach(b => {
+            b.disabled = true;
+            if (b.dataset.correct === 'true') b.classList.add('correct');
+            else if (b === btn) b.classList.add('wrong');
+          });
+          $('#quizNextWrap', gameBody).innerHTML = `<button class="game-start-btn" id="quizNext">${idx + 1 < words.length ? "Keyingisi" : "Natijani ko'rish"} <i class="fas fa-arrow-right"></i></button>`;
+          $('#quizNext', gameBody).addEventListener('click', () => { idx++; render(); });
+        });
+      });
+    }
+
+    function finish() {
+      const pct = Math.round((score / words.length) * 100);
+      renderGameSummary({
+        title: 'Test yakunlandi!',
+        stats: [
+          { value: `${score}/${words.length}`, label: "To'g'ri", cls: 'summary-good' },
+          { value: pct + '%', label: 'Natija' },
+        ],
+        onRestart: () => startQuiz(pool, n),
+        onBack: () => openGameSetup('quiz'),
+      });
+    }
+
+    render();
+  }
+
+  /* ---------- Match ---------- */
+  function startMatch(pool, pairsCount) {
+    const words = sample(pool, Math.min(pairsCount, pool.length));
+    const tiles = shuffle(
+      words.flatMap((w, i) => [
+        { key: i, text: w.english },
+        { key: i, text: w.uzbek },
+      ])
+    );
+
+    let firstPick = null;
+    let matchedCount = 0;
+    let moves = 0;
+    let locked = false;
+    const startTime = Date.now();
+
+    function statsHtml() {
+      return `<span><i class="fas fa-shuffle"></i> ${moves} harakat</span><span><i class="fas fa-layer-group"></i> ${matchedCount}/${words.length} juft</span>`;
+    }
+
+    function render() {
+      gameBody.innerHTML = `
+        <div class="game-header">
+          <div class="match-stats" id="matchStats">${statsHtml()}</div>
+        </div>
+        <div class="match-grid" id="matchGrid">
+          ${tiles.map((t, i) => `
+            <button class="match-tile" data-i="${i}">
+              <span class="match-tile-inner">${esc(t.text)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+      $$('.match-tile', gameBody).forEach(btn => {
+        btn.addEventListener('click', () => onPick(+btn.dataset.i));
+      });
+    }
+
+    function updateStats() {
+      const el = $('#matchStats', gameBody);
+      if (el) el.innerHTML = statsHtml();
+    }
+
+    function onPick(i) {
+      if (locked) return;
+      const btn = $(`.match-tile[data-i="${i}"]`, gameBody);
+      if (!btn || btn.classList.contains('matched') || btn.classList.contains('open')) return;
+
+      btn.classList.add('open');
+
+      if (firstPick === null) {
+        firstPick = i;
+        return;
+      }
+
+      moves++;
+      const a = tiles[firstPick], b = tiles[i];
+      const btnA = $(`.match-tile[data-i="${firstPick}"]`, gameBody);
+
+      if (a.key === b.key && firstPick !== i) {
+        matchedCount++;
+        btnA.classList.add('matched');
+        btn.classList.add('matched');
+        firstPick = null;
+        updateStats();
+        if (matchedCount === words.length) {
+          setTimeout(finish, 500);
+        }
+      } else {
+        locked = true;
+        setTimeout(() => {
+          btnA.classList.remove('open');
+          btn.classList.remove('open');
+          firstPick = null;
+          locked = false;
+          updateStats();
+        }, 700);
+        updateStats();
+      }
+    }
+
+    function finish() {
+      const seconds = Math.round((Date.now() - startTime) / 1000);
+      renderGameSummary({
+        title: 'Ajoyib!',
+        stats: [
+          { value: moves, label: 'Harakat', cls: 'summary-good' },
+          { value: seconds + 's', label: 'Vaqt' },
+        ],
+        onRestart: () => startMatch(pool, pairsCount),
+        onBack: () => openGameSetup('match'),
+      });
+    }
+
+    render();
+  }
+
+  /* ---------- Typing ---------- */
+  function startTyping(pool, seconds) {
+    let queue = shuffle(pool);
+    let qIdx = 0;
+    let score = 0, wrong = 0;
+    let timeLeft = seconds;
+    let currentWord = null;
+
+    function nextWord() {
+      if (qIdx >= queue.length) { queue = shuffle(pool); qIdx = 0; }
+      currentWord = queue[qIdx++];
+    }
+
+    function render() {
+      gameBody.innerHTML = `
+        <div class="game-header">
+          <div class="typing-timer" id="typingTimer"><i class="fas fa-clock"></i> ${timeLeft}s</div>
+          <div class="game-counter"><i class="fas fa-star" style="color:#f59e0b"></i> ${score} &nbsp; <i class="fas fa-xmark" style="color:#ef4444"></i> ${wrong}</div>
+        </div>
+        <div class="typing-card">
+          <span class="flashcard-hint">O'zbekcha tarjima</span>
+          <div class="typing-word">${esc(currentWord.uzbek)}</div>
+        </div>
+        <input type="text" class="typing-input" id="typingInput" placeholder="Inglizcha yozing..." autocomplete="off" spellcheck="false">
+        <div class="typing-feedback" id="typingFeedback"></div>
+      `;
+      const input = $('#typingInput', gameBody);
+      input.focus();
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submit();
+      });
+    }
+
+    function submit() {
+      const input = $('#typingInput', gameBody);
+      if (!input) return;
+      const val = input.value.trim().toLowerCase();
+      if (!val) return;
+      const feedback = $('#typingFeedback', gameBody);
+      if (val === currentWord.english.toLowerCase()) {
+        score++;
+        feedback.innerHTML = `<span class="fb-good"><i class="fas fa-check"></i> To'g'ri!</span>`;
+      } else {
+        wrong++;
+        feedback.innerHTML = `<span class="fb-bad"><i class="fas fa-xmark"></i> To'g'risi: ${esc(currentWord.english)}</span>`;
+      }
+      input.disabled = true;
+      nextWord();
+      setTimeout(() => { if (timeLeft > 0) render(); }, 350);
+    }
+
+    function tick() {
+      timeLeft--;
+      const timerEl = $('#typingTimer', gameBody);
+      if (timerEl) timerEl.innerHTML = `<i class="fas fa-clock"></i> ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(gameState.timer);
+        finish();
+      }
+    }
+
+    function finish() {
+      const total = score + wrong;
+      renderGameSummary({
+        title: 'Vaqt tugadi!',
+        stats: [
+          { value: score, label: "To'g'ri", cls: 'summary-good' },
+          { value: wrong, label: 'Xato', cls: 'summary-bad' },
+          { value: total, label: 'Jami' },
+        ],
+        onRestart: () => startTyping(pool, seconds),
+        onBack: () => openGameSetup('typing'),
+      });
+    }
+
+    nextWord();
+    render();
+    gameState.timer = setInterval(tick, 1000);
   }
 
   /* ---------- Init ---------- */
